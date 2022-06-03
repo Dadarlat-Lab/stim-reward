@@ -1,10 +1,12 @@
 #!/bin/python3
 #######################################################################################
 # MOUSE NEURAL ELECTROSTIMULATION PROGRAM USING BPOD STATE MACHINE AND INTAN CONTROLLER
-# (c) 2022 Purdue University
 #
-# Reused Example Code
-# (c) 2022 Intan Technologies
+# BSD 3-Clause License
+# Copyright (c) 2022, Purdue University All rights reserved.
+#
+# Public Domain Example Code
+# Copyright (c) 2022, Intan Technologies
 #
 # Softcode Key:
 # 1: Stimulation
