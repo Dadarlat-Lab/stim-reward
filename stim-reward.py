@@ -149,7 +149,11 @@ def initStim():
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + '.shape ' + STIM_TYPE)
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.interphasedelaymicroseconds ' + STIM_INTERPHASE)
+
+    if ("interphase" in STIM_TYPE) & (STIM_INTERPHASE > 0):
+        scommand.sendall(b'set ' + STIM_CHANNEL + '.interphasedelaymicroseconds ' + STIM_INTERPHASE)
+        time.sleep(0.1)
+    scommand.sendall(b'set ' + STIM_CHANNEL + '.usefastsettle true')
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + '.pulseortrain pulsetrain')
     time.sleep(0.1)
