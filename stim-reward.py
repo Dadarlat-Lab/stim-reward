@@ -19,10 +19,12 @@
 # BP 3: Right
 #######################################################################################
 
+import datetime
 import os, random, sys, time, socket
 from pybpodapi.protocol import Bpod, StateMachine
 import RPi.GPIO as GPIO
 import matplotlib.pyplot as plt
+from mdutils.mdutils import MdUtils
 
 # Buzzer params
 BUZZER_PIN = 17         # Trigger (+) pin for buzzer
@@ -45,12 +47,13 @@ COMMAND_PORT = 5000             # Port for sending command data
 WAVEFORM_PORT = 5001            # Port for receiving waveform data
 
 # RHX stimulation params
-STIM_CHANNEL = 'a-010'  # Stimulation channel (port-channel #)
-STIM_CURRENT = '25'     # Current of stimulation amplitude (microamps)
-STIM_INTERPHASE = '50'  # Duration of interphase (microseconds)
-STIM_DURATION = 200     # Duration of stim pulse (microseconds)
-STIM_TOTAL = 0.1        # Total time of stim pulsing (sec)
-STIM_FREQ = 250         # Frequency of pulses (Hz)
+STIM_CHANNEL = 'a-010'                      # Stimulation channel (port-channel #)
+STIM_CURRENT = '25'                         # Current of stimulation amplitude (microamps)
+STIM_INTERPHASE = '50'                      # Duration of interphase (microseconds)
+STIM_DURATION = 200                         # Duration of stim pulse (microseconds)
+STIM_TOTAL = 0.1                            # Total time of stim pulsing (sec)
+STIM_FREQ = 250                             # Frequency of pulses (Hz)
+STIM_TYPE = 'biphasicwithinterphasedelay'   # Type/shape of stimulation
 
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
@@ -66,10 +69,16 @@ def softCode(data):
         scommand.sendall(b'execute manualstimtriggerpulse f1')
 
     elif data == 2:
+        trialResults[trialCounter] = "Success"
+        trialCounter = trialCounter + 1
+
         # play reward sound
         buzzer = GPIO.PWM(BUZZER_PIN, REWARD_FREQ)
 
     elif data == 3:
+        trialResults[trialCounter] = "Failure"
+        trialCounter = trialCounter + 1
+
         # play failure sound
         buzzer = GPIO.PWM(BUZZER_PIN, PUNISH_FREQ)
 
@@ -138,7 +147,7 @@ def initStim():
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + '.source keypressf1')
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.shape biphasicwithinterphasedelay')
+    scommand.sendall(b'set ' + STIM_CHANNEL + '.shape ' + STIM_TYPE)
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + '.interphasedelaymicroseconds ' + STIM_INTERPHASE)
     time.sleep(0.1)
@@ -202,6 +211,26 @@ def parseWaveform():
             
             # Scale this sample to convert to microVolts
             amplifierData.append(0.195 * (rawSample - 32768))
+
+# Report creation function
+def createReport():
+    date = datetime.datetime.now().strftime("%m-%d-%y %h:%s")
+    report = MdUtils(file_name='Experiment Report ' + date,title='Experiment Report')
+    
+    report.new_header(level=1, title='Experiment Report')
+    report.write("Stimulation Type: " + STIM_TYPE)
+    
+    report.new_header(level=2, title='Trial Results At A Glance')
+    report.new_list(trialResults, marked_with='1')
+
+    for x in range(0, trialCounter):
+        report.new_header(level=2, title="Trial" + str(trialCounter + 1))
+        report.new_header(level=3, title="Timestamps")
+        report.new_header(level=3, title="Waveform")
+    
+    report.new_header(level=2, title="Neural Data")
+
+    report.create_md_file()
 
 # Main function
 def main():
@@ -284,10 +313,20 @@ def main():
     
     scommand.close() # Close TCP socket
 
+    createReport()   # Create markdown report
+
 # ENTRY
 
 if __name__ == '__main__':
-    nTrials = int(sys.argv[1])
+    if sys.argv[1] != None:
+        nTrials = int(sys.argv[1])
+    else:
+        print("Syntax: ./stim-reward.py <nTrials>")
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
+        
 
     # Init bpod
     my_bpod = Bpod()
@@ -304,6 +343,8 @@ if __name__ == '__main__':
     swaveform.connect((TCP_ADDRESS, WAVEFORM_PORT))
 
     timestep = 0    # Var to hold timestep
+    trialResults = ["" for x in range(nTrials)]
+    trialCounter = 0
 
     # Handle keyboard interrupts gracefully
     try:
