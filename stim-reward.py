@@ -238,7 +238,7 @@ def createReport():
     report.new_list(trialResults, marked_with='1')
 
     for x in range(0, trialCounter):
-        report.new_header(level=2, title="Trial" + str(trialCounter + 1))
+        report.new_header(level=2, title="Trial" + str(x + 1))
         report.new_header(level=3, title="Timestamps")
         report.new_header(level=3, title="Waveform")
     
