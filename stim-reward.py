@@ -225,6 +225,12 @@ def parseWaveform():
             
             # Scale this sample to convert to microVolts
             amplifierData.append(0.195 * (rawSample - 32768))
+    
+    plt.plot(amplifierTimestamps, amplifierData)
+    plt.title(str(STIM_CHANNEL, "utf-8") + ' Amplifier Data')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Voltage (uV)')
+    plt.savefig('waveform.png')
 
 # Report creation function
 def createReport():
@@ -243,6 +249,7 @@ def createReport():
         report.new_header(level=3, title="Waveform")
     
     report.new_header(level=2, title="Neural Data")
+    report.new_inline_image("waveform data", "./waveform.png")
 
     report.create_md_file()
 
@@ -326,6 +333,8 @@ def main():
     my_bpod.close()  # Disconnect Bpod and perform post-run actions
     
     scommand.close() # Close TCP socket
+
+    parseWaveform()  # Parse waveform data
 
     createReport()   # Create markdown report
 
