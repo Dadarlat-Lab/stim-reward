@@ -55,6 +55,8 @@ STIM_TOTAL = 0.1                            # Total time of stim pulsing (sec)
 STIM_FREQ = 250                             # Frequency of pulses (Hz)
 STIM_TYPE = b'biphasicwithinterphasedelay'   # Type/shape of stimulation
 
+trialCounter = 0
+
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
     print("received " + str(data))
@@ -351,7 +353,6 @@ if __name__ == '__main__':
 
     timestep = 0    # Var to hold timestep
     trialResults = ["" for x in range(nTrials)]
-    trialCounter = 0
 
     # Handle keyboard interrupts gracefully
     try:
