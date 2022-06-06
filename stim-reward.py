@@ -146,6 +146,8 @@ def tcpInit():
 def initStim():
     numPulse = str(int(STIM_FREQ * STIM_TOTAL))
     # Send commands to configure some stimulation parameters, and execute UploadStimParameters for that channel
+    scommand.sendall(b'set usefastsettle true')
+    time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.stimenabled true')
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.source keypressf1')
@@ -156,8 +158,7 @@ def initStim():
     if b"interphase" in STIM_TYPE:
         scommand.sendall(b'set ' + STIM_CHANNEL + b'.interphasedelaymicroseconds ' + STIM_INTERPHASE)
         time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + b'.usefastsettle true')
-    time.sleep(0.1)
+        
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.pulseortrain PulseTrain')
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.polarity NegativeFirst')
@@ -166,11 +167,11 @@ def initStim():
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphaseamplitudemicroamps ' + STIM_CURRENT)
     time.sleep(0.1)
-    scommand.sendall(b'set a' + STIM_CHANNEL + b'.firstphasedurationmicroseconds ' + bytes(str(STIM_DURATION), "utf-8"))
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphasedurationmicroseconds ' + bytes(str(STIM_DURATION), "utf-8"))
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphaseamplitudemicroamps ' + STIM_CURRENT)
     time.sleep(0.1)
-    scommand.sendall(b'set a' + STIM_CHANNEL + b'.secondphasedurationmicroseconds ' + bytes(str(STIM_DURATION), "utf-8"))
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphasedurationmicroseconds ' + bytes(str(STIM_DURATION), "utf-8"))
     time.sleep(0.1)
     scommand.sendall(b'execute uploadstimparameters ' + STIM_CHANNEL)
     time.sleep(1)
