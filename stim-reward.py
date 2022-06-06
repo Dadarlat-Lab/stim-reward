@@ -232,7 +232,7 @@ def createReport():
     report = MdUtils(file_name='Experiment Report ' + date,title='Experiment Report')
     
     report.new_header(level=1, title='Experiment Report')
-    report.write("Stimulation Type: " + STIM_TYPE)
+    report.write("Stimulation Type: " + str(STIM_TYPE, "utf-8"))
     
     report.new_header(level=2, title='Trial Results At A Glance')
     report.new_list(trialResults, marked_with='1')
