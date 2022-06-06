@@ -287,6 +287,8 @@ if __name__ == '__main__':
     swaveform = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     swaveform.connect((TCP_ADDRESS, WAVEFORM_PORT))
 
+    timestep = 0    # Var to hold timestep
+
     # Handle keyboard interrupts gracefully
     try:
         main()
