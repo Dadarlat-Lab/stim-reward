@@ -25,6 +25,7 @@ from pybpodapi.protocol import Bpod, StateMachine
 import RPi.GPIO as GPIO
 import matplotlib.pyplot as plt
 from mdutils.mdutils import MdUtils
+import pygame
 
 # Buzzer params
 BUZZER_PIN = 17         # Trigger (+) pin for buzzer
@@ -63,7 +64,7 @@ def softCode(data):
     global trialCounter
     if data == 1:
         # play init sound
-        buzzer = GPIO.PWM(BUZZER_PIN, INIT_FREQ)
+        sound = pygame.mixer.Sound('/home/pi/init.wav')
 
         # Send command to set board running
         scommand.sendall(b'set runmode run')
@@ -76,21 +77,21 @@ def softCode(data):
         trialCounter += 1
 
         # play reward sound
-        buzzer = GPIO.PWM(BUZZER_PIN, REWARD_FREQ)
+        sound = pygame.mixer.Sound('/home/pi/reward.wav')
 
     elif data == 3:
         trialResults[trialCounter] = "Failure"
         trialCounter += 1
 
-        # play failure sound
-        buzzer = GPIO.PWM(BUZZER_PIN, PUNISH_FREQ)
+        # play punish sound
+        sound = pygame.mixer.Sound('/home/pi/punish.wav')
 
     else:
         return None
 
-    buzzer.start(BUZZER_DUTYCYCLE)
-    time.sleep(BUZZER_TIME)
-    buzzer.stop()
+    playing = sound.play()
+    while playing.get_busy():
+        pygame.time.delay(100)
 
 # Read unsigned 32-bit int--Credit Intan RHX Example TCP Client
 def readUint32(array, arrayIndex):
@@ -263,6 +264,9 @@ def main():
     tcpInit()
     initStim()
 
+    # Init audio mixer
+    pygame.mixer.init()
+
     trialTypes = [1, 2]  # 1 (rewarded left) or 2 (rewarded right)
 
     # Credit: https://bit.ly/3Q0N6Af (pybpod-api protocol docs)
@@ -334,7 +338,7 @@ def main():
     
     scommand.close() # Close TCP socket
 
-    parseWaveform()  # Parse waveform data
+    # parseWaveform()  # Parse waveform data
 
     createReport()   # Create markdown report
 
