@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 
 # Buzzer params
 BUZZER_PIN = 17         # Trigger (+) pin for buzzer
-BUZZER_TIME = 1         # Time (sec) for buzzer to sound
+BUZZER_TIME = 0.5       # Time (sec) for buzzer to sound
 BUZZER_DUTYCYCLE = 50   # Duty cycle (%) for buzzer
 
 # Frequency params
@@ -46,7 +46,11 @@ WAVEFORM_PORT = 5001            # Port for receiving waveform data
 
 # RHX stimulation params
 STIM_CHANNEL = 'a-010'  # Stimulation channel (port-channel #)
-STIM_CURRENT = '10'     # Current of first phase stimulation amplitude (microamps)
+STIM_CURRENT = '25'     # Current of stimulation amplitude (microamps)
+STIM_INTERPHASE = '50'  # Duration of interphase (microseconds)
+STIM_DURATION = 200     # Duration of stim pulse (microseconds)
+STIM_TOTAL = 0.1        # Total time of stim pulsing (sec)
+STIM_FREQ = 250         # Frequency of pulses (Hz)
 
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
@@ -134,9 +138,21 @@ def initStim():
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + '.source keypressf1')
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.firstphaseamplitudemicroamps ' + STIM_CURRENT)
+    scommand.sendall(b'set ' + STIM_CHANNEL + '.shape biphasicwithinterphasedelay')
     time.sleep(0.1)
-    scommand.sendall(b'set a' + STIM_CHANNEL + '.firstphasedurationmicroseconds ' + BUZZER_TIME)
+    scommand.sendall(b'set ' + STIM_CHANNEL + '.interphasedelaymicroseconds ' + STIM_INTERPHASE)
+    time.sleep(0.1)
+    scommand.sendall(b'set ' + STIM_CHANNEL + '.pulseortrain pulsetrain')
+    time.sleep(0.1)
+    scommand.sendall(b'set ' + STIM_CHANNEL + '.numberofstimpulses ' + str(STIM_FREQ * STIM_TOTAL))
+    time.sleep(0.1)
+    scommand.sendall(b'set ' + STIM_CHANNEL + '.firstphaseamplitudemicroamps -' + STIM_CURRENT)
+    time.sleep(0.1)
+    scommand.sendall(b'set a' + STIM_CHANNEL + '.firstphasedurationmicroseconds ' + STIM_DURATION)
+    time.sleep(0.1)
+    scommand.sendall(b'set ' + STIM_CHANNEL + '.secondphaseamplitudemicroamps ' + STIM_CURRENT)
+    time.sleep(0.1)
+    scommand.sendall(b'set a' + STIM_CHANNEL + '.secondphasedurationmicroseconds ' + STIM_DURATION)
     time.sleep(0.1)
     scommand.sendall(b'execute uploadstimparameters ' + STIM_CHANNEL)
     time.sleep(1)
