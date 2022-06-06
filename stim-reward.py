@@ -322,9 +322,9 @@ def main():
 # ENTRY
 
 if __name__ == '__main__':
-    if sys.argv[1] != None:
+    if len(sys.argv) == 2:
         nTrials = int(sys.argv[1])
-    else:
+    else: 
         print("Syntax: ./stim-reward.py <nTrials>")
         try:
             sys.exit(0)
