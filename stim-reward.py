@@ -47,13 +47,13 @@ COMMAND_PORT = 5000             # Port for sending command data
 WAVEFORM_PORT = 5001            # Port for receiving waveform data
 
 # RHX stimulation params
-STIM_CHANNEL = 'a-010'                      # Stimulation channel (port-channel #)
-STIM_CURRENT = '25'                         # Current of stimulation amplitude (microamps)
-STIM_INTERPHASE = '50'                      # Duration of interphase (microseconds)
+STIM_CHANNEL = b'a-010'                      # Stimulation channel (port-channel #)
+STIM_CURRENT = b'25'                         # Current of stimulation amplitude (microamps)
+STIM_INTERPHASE = b'50'                      # Duration of interphase (microseconds)
 STIM_DURATION = 200                         # Duration of stim pulse (microseconds)
 STIM_TOTAL = 0.1                            # Total time of stim pulsing (sec)
 STIM_FREQ = 250                             # Frequency of pulses (Hz)
-STIM_TYPE = 'biphasicwithinterphasedelay'   # Type/shape of stimulation
+STIM_TYPE = b'biphasicwithinterphasedelay'   # Type/shape of stimulation
 
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
@@ -142,30 +142,31 @@ def tcpInit():
 
 # Configure stimulation parameters--Credit Intan RHX Example TCP Client
 def initStim():
+    numPulse = str(int(STIM_FREQ * STIM_TOTAL))
     # Send commands to configure some stimulation parameters, and execute UploadStimParameters for that channel
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.stimenabled true')
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.stimenabled true')
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.source keypressf1')
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.source keypressf1')
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.shape ' + STIM_TYPE)
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.shape ' + STIM_TYPE)
     time.sleep(0.1)
 
-    if ("interphase" in STIM_TYPE) & (STIM_INTERPHASE > 0):
-        scommand.sendall(b'set ' + STIM_CHANNEL + '.interphasedelaymicroseconds ' + STIM_INTERPHASE)
+    if b"interphase" in STIM_TYPE:
+        scommand.sendall(b'set ' + STIM_CHANNEL + b'.interphasedelaymicroseconds ' + STIM_INTERPHASE)
         time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.usefastsettle true')
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.usefastsettle true')
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.pulseortrain pulsetrain')
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.pulseortrain pulsetrain')
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.numberofstimpulses ' + str(STIM_FREQ * STIM_TOTAL))
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.numberofstimpulses ' + bytes(numPulse, "utf-8"))
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.firstphaseamplitudemicroamps -' + STIM_CURRENT)
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphaseamplitudemicroamps -' + STIM_CURRENT)
     time.sleep(0.1)
-    scommand.sendall(b'set a' + STIM_CHANNEL + '.firstphasedurationmicroseconds ' + STIM_DURATION)
+    scommand.sendall(b'set a' + STIM_CHANNEL + b'.firstphasedurationmicroseconds ' + bytes(str(STIM_DURATION), "utf-8"))
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + '.secondphaseamplitudemicroamps ' + STIM_CURRENT)
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphaseamplitudemicroamps ' + STIM_CURRENT)
     time.sleep(0.1)
-    scommand.sendall(b'set a' + STIM_CHANNEL + '.secondphasedurationmicroseconds ' + STIM_DURATION)
+    scommand.sendall(b'set a' + STIM_CHANNEL + b'.secondphasedurationmicroseconds ' + bytes(str(STIM_DURATION), "utf-8"))
     time.sleep(0.1)
     scommand.sendall(b'execute uploadstimparameters ' + STIM_CHANNEL)
     time.sleep(1)
