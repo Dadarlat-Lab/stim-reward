@@ -60,6 +60,7 @@ trialCounter = 0
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
     print("received " + str(data))
+    global trialCounter
     if data == 1:
         # play init sound
         buzzer = GPIO.PWM(BUZZER_PIN, INIT_FREQ)
@@ -72,14 +73,14 @@ def softCode(data):
 
     elif data == 2:
         trialResults[trialCounter] = "Success"
-        trialCounter = trialCounter + 1
+        trialCounter += 1
 
         # play reward sound
         buzzer = GPIO.PWM(BUZZER_PIN, REWARD_FREQ)
 
     elif data == 3:
         trialResults[trialCounter] = "Failure"
-        trialCounter = trialCounter + 1
+        trialCounter += 1
 
         # play failure sound
         buzzer = GPIO.PWM(BUZZER_PIN, PUNISH_FREQ)
@@ -339,7 +340,6 @@ if __name__ == '__main__':
             sys.exit(0)
         except SystemExit:
             os._exit(0)
-        
 
     # Init bpod
     my_bpod = Bpod()
