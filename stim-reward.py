@@ -84,6 +84,9 @@ def softCode(data):
         # play failure sound
         buzzer = GPIO.PWM(BUZZER_PIN, PUNISH_FREQ)
 
+    else:
+        return None
+
     buzzer.start(BUZZER_DUTYCYCLE)
     time.sleep(BUZZER_TIME)
     buzzer.stop()
@@ -158,7 +161,7 @@ def initStim():
     if b"interphase" in STIM_TYPE:
         scommand.sendall(b'set ' + STIM_CHANNEL + b'.interphasedelaymicroseconds ' + STIM_INTERPHASE)
         time.sleep(0.1)
-        
+
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.pulseortrain PulseTrain')
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.polarity NegativeFirst')
