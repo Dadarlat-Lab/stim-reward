@@ -19,12 +19,15 @@
 # BP 3: Right
 #######################################################################################
 
+from asyncio import events
 import datetime
 import os, random, sys, time, socket
+from sqlite3 import TimestampFromTicks
 from pybpodapi.protocol import Bpod, StateMachine
 import RPi.GPIO as GPIO
 from mdutils.mdutils import MdUtils
 import pygame
+import csv
 
 # Buzzer params
 BUZZER_PIN = 17         # Trigger (+) pin for buzzer
@@ -59,38 +62,49 @@ trialCounter = 0
 
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
-    print("received " + str(data))
     global trialCounter
-    if data == 1:
-        # play init sound
-        sound = pygame.mixer.Sound('./init.wav')
+    global timestamps
+    global events
 
-        # Send command to set board running
-        scommand.sendall(b'set runmode run')
+    print("received " + str(data))
+    timestamps.append(datetime.time.now().strftime("%H:%M:%S.%f"))
 
-        # Stimulate
-        scommand.sendall(b'execute manualstimtriggerpulse f1')
+    # Buzzer only played for 1-3
+    if data < 4:
+        if data == 1:
+            events.append("Stim")
 
-    elif data == 2:
-        trialResults[trialCounter] = "Success"
-        trialCounter += 1
+            # play init sound
+            sound = pygame.mixer.Sound('./init.wav')
 
-        # play reward sound
-        sound = pygame.mixer.Sound('./reward.wav')
+            # Send command to set board running
+            scommand.sendall(b'set runmode run')
 
-    elif data == 3:
-        trialResults[trialCounter] = "Failure"
-        trialCounter += 1
+            # Stimulate
+            scommand.sendall(b'execute manualstimtriggerpulse f1')
 
-        # play punish sound
-        sound = pygame.mixer.Sound('./punish.wav')
+        elif data == 2:
+            events.append("Success")
+            trialResults[trialCounter] = "Success"
+            trialCounter += 1
 
-    else:
-        return None
+            # play reward sound
+            sound = pygame.mixer.Sound('./reward.wav')
 
-    playing = sound.play()
-    while playing.get_busy():
-        pygame.time.delay(100)
+        elif data == 3:
+            events.append("Failure")
+            trialResults[trialCounter] = "Failure"
+            trialCounter += 1
+
+            # play punish sound
+            sound = pygame.mixer.Sound('./punish.wav')
+
+        playing = sound.play()
+        while playing.get_busy():
+            pygame.time.delay(100)
+    
+    elif data == 10:
+        events.append("NoStim")
 
 # Read unsigned 32-bit int--Credit Intan RHX Example TCP Client
 def readUint32(array, arrayIndex):
@@ -216,15 +230,23 @@ def parseWaveform():
         for frame in range(framesPerBlock):
             # Expect 4 bytes to be timestamp as int32.
             rawTimestamp, rawIndex = readInt32(rawData, rawIndex)
-            
+
             # Multiply by 'timestep' to convert timestamp to seconds
             amplifierTimestamps.append(rawTimestamp * timestep)
 
             # Expect 2 bytes of wideband data.
             rawSample, rawIndex = readUint16(rawData, rawIndex)
-            
+
             # Scale this sample to convert to microVolts
             amplifierData.append(0.195 * (rawSample - 32768))
+
+    # Export neural data as csv
+    with open('neural-' + date + '.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Timestamp", "Voltage"])
+        writer.writerows(amplifierTimestamps, amplifierData)
+
+    print("Neural data report generated!")
 
 # Main function
 def main():
@@ -254,7 +276,7 @@ def main():
             leftAction = 'Reward'
             rightAction = 'Punish'
             rewardValve = 1
-        
+
         # Non stim trial
         elif thisTrialType == 2:
             leftAction = 'Punish'
@@ -307,22 +329,36 @@ def main():
         print("Current trial info: ", my_bpod.session.current_trial)
 
     my_bpod.close()  # Disconnect Bpod and perform post-run actions
-    
+
     scommand.close() # Close TCP socket
 
     parseWaveform()  # Parse waveform data
+
+    # Export event data as csv
+    with open('event-' + date + '.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Timestamp", "Event"])
+        writer.writerows(timestamps, events)
+
+    print("Event data report generated!")
 
 # ENTRY
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         nTrials = int(sys.argv[1])
-    else: 
+    else:
         print("Syntax: ./stim-reward.py <nTrials>")
         try:
             sys.exit(0)
         except SystemExit:
             os._exit(0)
+
+    # Parse date
+    date = datetime.datetime.now().strftime("%m%d%y-%H%S")
+
+    timestamps = []      # Timestamps for trial events
+    events = []          # Trial events
 
     # Init bpod
     my_bpod = Bpod()
