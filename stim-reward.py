@@ -226,27 +226,6 @@ def parseWaveform():
             # Scale this sample to convert to microVolts
             amplifierData.append(0.195 * (rawSample - 32768))
 
-# Report creation function
-def createReport():
-    date = datetime.datetime.now().strftime("%m-%d-%y %h:%s")
-    report = MdUtils(file_name='Experiment Report ' + date,title='Experiment Report')
-    
-    report.new_header(level=1, title='Experiment Report')
-    report.write("Stimulation Type: " + str(STIM_TYPE, "utf-8"))
-    
-    report.new_header(level=2, title='Trial Results At A Glance')
-    report.new_list(trialResults, marked_with='1')
-
-    for x in range(0, trialCounter):
-        report.new_header(level=2, title="Trial" + str(x + 1))
-        report.new_header(level=3, title="Timestamps")
-        report.new_header(level=3, title="Waveform")
-    
-    report.new_header(level=2, title="Neural Data")
-    report.new_inline_image("waveform data", "./waveform.png")
-
-    report.create_md_file()
-
 # Main function
 def main():
     # Init gpio
@@ -331,9 +310,7 @@ def main():
     
     scommand.close() # Close TCP socket
 
-    # parseWaveform()  # Parse waveform data
-
-    createReport()   # Create markdown report
+    parseWaveform()  # Parse waveform data
 
 # ENTRY
 
