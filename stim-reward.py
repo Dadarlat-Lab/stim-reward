@@ -23,7 +23,6 @@ import datetime
 import os, random, sys, time, socket
 from pybpodapi.protocol import Bpod, StateMachine
 import RPi.GPIO as GPIO
-import matplotlib.pyplot as plt
 from mdutils.mdutils import MdUtils
 import pygame
 
@@ -64,7 +63,7 @@ def softCode(data):
     global trialCounter
     if data == 1:
         # play init sound
-        sound = pygame.mixer.Sound('/home/pi/init.wav')
+        sound = pygame.mixer.Sound('./init.wav')
 
         # Send command to set board running
         scommand.sendall(b'set runmode run')
@@ -77,14 +76,14 @@ def softCode(data):
         trialCounter += 1
 
         # play reward sound
-        sound = pygame.mixer.Sound('/home/pi/reward.wav')
+        sound = pygame.mixer.Sound('./reward.wav')
 
     elif data == 3:
         trialResults[trialCounter] = "Failure"
         trialCounter += 1
 
         # play punish sound
-        sound = pygame.mixer.Sound('/home/pi/punish.wav')
+        sound = pygame.mixer.Sound('./punish.wav')
 
     else:
         return None
@@ -226,12 +225,6 @@ def parseWaveform():
             
             # Scale this sample to convert to microVolts
             amplifierData.append(0.195 * (rawSample - 32768))
-    
-    plt.plot(amplifierTimestamps, amplifierData)
-    plt.title(str(STIM_CHANNEL, "utf-8") + ' Amplifier Data')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Voltage (uV)')
-    plt.savefig('waveform.png')
 
 # Report creation function
 def createReport():
