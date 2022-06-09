@@ -75,7 +75,7 @@ def softCode(data):
             events.append("Stim")
 
             # play init sound
-            sound = pygame.mixer.Sound('./init.wav')
+            sound = pygame.mixer.Sound('./audio/init.wav')
 
             # Send command to set board running
             scommand.sendall(b'set runmode run')
@@ -89,7 +89,7 @@ def softCode(data):
             trialCounter += 1
 
             # play reward sound
-            sound = pygame.mixer.Sound('./reward.wav')
+            sound = pygame.mixer.Sound('./audio/reward.wav')
 
         elif data == 3:
             events.append("Failure")
@@ -97,7 +97,7 @@ def softCode(data):
             trialCounter += 1
 
             # play punish sound
-            sound = pygame.mixer.Sound('./punish.wav')
+            sound = pygame.mixer.Sound('./audio/punish.wav')
 
         playing = sound.play()
         while playing.get_busy():
