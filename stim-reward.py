@@ -22,10 +22,8 @@
 from asyncio import events
 import datetime
 import os, random, sys, time, socket
-from sqlite3 import TimestampFromTicks
 from pybpodapi.protocol import Bpod, StateMachine
 import RPi.GPIO as GPIO
-from mdutils.mdutils import MdUtils
 import pygame
 import csv
 
@@ -33,11 +31,6 @@ import csv
 BUZZER_PIN = 17         # Trigger (+) pin for buzzer
 BUZZER_TIME = 0.5       # Time (sec) for buzzer to sound
 BUZZER_DUTYCYCLE = 50   # Duty cycle (%) for buzzer
-
-# Frequency params
-INIT_FREQ = 440         # Initiation frequency (Hz)
-REWARD_FREQ = 650       # Reward frequency (Hz)
-PUNISH_FREQ = 800       # Punishment frequency (Hz)
 
 # Timing params
 TIMEOUT_TIME = 10       # Duration of timeout (sec)
