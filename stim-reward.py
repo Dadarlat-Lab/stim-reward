@@ -24,10 +24,8 @@ import tkinter as tk
 from tkinter import filedialog
 import datetime
 import os, random, sys, time, socket
-from sqlite3 import TimestampFromTicks
 from pybpodapi.protocol import Bpod, StateMachine
 import RPi.GPIO as GPIO
-from mdutils.mdutils import MdUtils
 import pygame
 import csv
 
@@ -35,11 +33,6 @@ import csv
 BUZZER_PIN = 17         # Trigger (+) pin for buzzer
 BUZZER_TIME = 0.5       # Time (sec) for buzzer to sound
 BUZZER_DUTYCYCLE = 50   # Duty cycle (%) for buzzer
-
-# Frequency params
-INIT_FREQ = 440         # Initiation frequency (Hz)
-REWARD_FREQ = 650       # Reward frequency (Hz)
-PUNISH_FREQ = 800       # Punishment frequency (Hz)
 
 # Timing params
 TIMEOUT_TIME = 10       # Duration of timeout (sec)
@@ -77,7 +70,7 @@ def softCode(data):
             events.append("Stim")
 
             # play init sound
-            sound = pygame.mixer.Sound('./init.wav')
+            sound = pygame.mixer.Sound('./audio/init.wav')
 
             # Stimulate
             scommand.sendall(b'execute manualstimtriggerpulse f1')
@@ -88,7 +81,7 @@ def softCode(data):
             trialCounter += 1
 
             # play reward sound
-            sound = pygame.mixer.Sound('./reward.wav')
+            sound = pygame.mixer.Sound('./audio/reward.wav')
 
         elif data == 3:
             events.append("Failure")
@@ -96,7 +89,7 @@ def softCode(data):
             trialCounter += 1
 
             # play punish sound
-            sound = pygame.mixer.Sound('./punish.wav')
+            sound = pygame.mixer.Sound('./audio/punish.wav')
 
         playing = sound.play()
         while playing.get_busy():
