@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 #######################################################################################
 # MOUSE NEURAL ELECTROSTIMULATION PROGRAM USING BPOD STATE MACHINE AND INTAN CONTROLLER
 #
@@ -20,6 +20,8 @@
 #######################################################################################
 
 from asyncio import events
+import tkinter as tk
+from tkinter import filedialog
 import datetime
 import os, random, sys, time, socket
 from sqlite3 import TimestampFromTicks
@@ -44,13 +46,13 @@ TIMEOUT_TIME = 10       # Duration of timeout (sec)
 
 # RHX TCP communication params
 COMMAND_BUFFER_SIZE = 1024      # Size of command data buffer
-WAVEFORM_BUFFER_SIZE = 200000   # Size of waveform data buffer
-TCP_ADDRESS = '127.0.0.1'       # IP Address (using localhost currently)
+WAVEFORM_BUFFER_SIZE = 772*1000   # Size of waveform data buffer
+TCP_ADDRESS = '128.46.90.210'       # IP Address (using localhost currently)
 COMMAND_PORT = 5000             # Port for sending command data
 WAVEFORM_PORT = 5001            # Port for receiving waveform data
 
 # RHX stimulation params
-STIM_CHANNEL = b'a-010'                      # Stimulation channel (port-channel #)
+STIM_CHANNEL = b'A-000'                      # Stimulation channel (port-channel #)
 STIM_CURRENT = b'25'                         # Current of stimulation amplitude (microamps)
 STIM_INTERPHASE = b'50'                      # Duration of interphase (microseconds)
 STIM_DURATION = 200                         # Duration of stim pulse (microseconds)
@@ -67,7 +69,7 @@ def softCode(data):
     global events
 
     print("received " + str(data))
-    timestamps.append(datetime.time.now().strftime("%H:%M:%S.%f"))
+    timestamps.append(datetime.datetime.now().strftime("%H:%M:%S.%f"))
 
     # Buzzer only played for 1-3
     if data < 4:
@@ -76,9 +78,6 @@ def softCode(data):
 
             # play init sound
             sound = pygame.mixer.Sound('./init.wav')
-
-            # Send command to set board running
-            scommand.sendall(b'set runmode run')
 
             # Stimulate
             scommand.sendall(b'execute manualstimtriggerpulse f1')
@@ -102,7 +101,7 @@ def softCode(data):
         playing = sound.play()
         while playing.get_busy():
             pygame.time.delay(100)
-    
+
     elif data == 10:
         events.append("NoStim")
 
@@ -157,7 +156,15 @@ def tcpInit():
 
     # Send TCP commands to set up TCP Data Output Enabled for wide
     # band of channel A-010
-    scommand.sendall(b'set a-010.tcpdataoutputenabled true')
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.tcpdataoutputenabled true')
+    time.sleep(0.1)
+
+    # Send command to RHX software to set baseFileName
+    scommand.sendall(b'set filename.basefilename recording-' + date.encode('utf-8') + b'.rhs')
+    time.sleep(0.1)
+
+    # Send command to RHX software to set path
+    scommand.sendall(b'set filename.path /home/dadarlatlab')
     time.sleep(0.1)
 
 # Configure stimulation parameters--Credit Intan RHX Example TCP Client
@@ -194,6 +201,13 @@ def initStim():
     scommand.sendall(b'execute uploadstimparameters ' + STIM_CHANNEL)
     time.sleep(1)
 
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.recordingenabled true')
+    time.sleep(0.1)
+
+    # Send command to RHX software to begin recording
+    scommand.sendall(b'set runmode record')
+
+
 # Read waveform--Credit Intan RHX Example TCP Client
 def parseWaveform():
     # Calculations for accurate parsing
@@ -210,6 +224,10 @@ def parseWaveform():
 
     # Read waveform data
     rawData = swaveform.recv(WAVEFORM_BUFFER_SIZE)
+
+    print(len(rawData))
+    print(waveformBytesPerBlock)
+
     if len(rawData) % waveformBytesPerBlock != 0:
         raise Exception('An unexpected amount of data arrived that is not an integer multiple of the expected data size per block')
     numBlocks = int(len(rawData) / waveformBytesPerBlock)
@@ -243,17 +261,12 @@ def parseWaveform():
     # Export neural data as csv
     with open('neural-' + date + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Timestamp", "Voltage"])
-        writer.writerows(amplifierTimestamps, amplifierData)
+        writer.writerows([amplifierTimestamps, amplifierData])
 
     print("Neural data report generated!")
 
 # Main function
 def main():
-    # Init gpio
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(BUZZER_PIN,GPIO.OUT)
-
     # Init TCP connection
     tcpInit()
     initStim()
@@ -328,17 +341,18 @@ def main():
 
         print("Current trial info: ", my_bpod.session.current_trial)
 
-    my_bpod.close()  # Disconnect Bpod and perform post-run actions
+    my_bpod.close()                       # Disconnect Bpod and perform post-run actions
 
-    scommand.close() # Close TCP socket
+    scommand.sendall(b'set runmode stop') # Stop recording
 
-    parseWaveform()  # Parse waveform data
+    scommand.close()                      # Close TCP socket
+
+    parseWaveform()                       # Parse waveform data
 
     # Export event data as csv
     with open('event-' + date + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Timestamp", "Event"])
-        writer.writerows(timestamps, events)
+        writer.writerows([timestamps, trialEvents])
 
     print("Event data report generated!")
 
