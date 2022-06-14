@@ -53,8 +53,6 @@ STIM_TOTAL = 0.1                            # Total time of stim pulsing (sec)
 STIM_FREQ = 250                             # Frequency of pulses (Hz)
 STIM_TYPE = b'biphasicwithinterphasedelay'   # Type/shape of stimulation
 
-trialCounter = 0
-
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
     global trialCounter
@@ -181,15 +179,15 @@ def initStim():
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.polarity NegativeFirst')
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + b'.numberofstimpulses ' + bytes(numPulse, "utf-8"))
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.numberofstimpulses ' + bytes(numPulse, 'utf-8'))
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphaseamplitudemicroamps ' + STIM_CURRENT)
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphasedurationmicroseconds ' + bytes(str(STIM_DURATION), "utf-8"))
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphasedurationmicroseconds ' + STIM_DURATION.encode('utf-8'))
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphaseamplitudemicroamps ' + STIM_CURRENT)
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphasedurationmicroseconds ' + bytes(str(STIM_DURATION), "utf-8"))
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphasedurationmicroseconds ' + STIM_DURATION.encode('utf-8'))
     time.sleep(0.1)
     scommand.sendall(b'execute uploadstimparameters ' + STIM_CHANNEL)
     time.sleep(1)
@@ -345,7 +343,7 @@ def main():
     # Export event data as csv
     with open('event-' + date + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerows([timestamps, trialEvents])
+        writer.writerows([timestamps, events])
 
     print("Event data report generated!")
 
@@ -363,6 +361,8 @@ if __name__ == '__main__':
 
     # Parse date
     date = datetime.datetime.now().strftime("%m%d%y-%H%S")
+
+    trialCounter = 0     # Keep track of count of trials
 
     timestamps = []      # Timestamps for trial events
     events = []          # Trial events
