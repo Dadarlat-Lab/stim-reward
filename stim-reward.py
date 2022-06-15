@@ -25,14 +25,8 @@ from tkinter import filedialog
 import datetime
 import os, random, sys, time, socket
 from pybpodapi.protocol import Bpod, StateMachine
-import RPi.GPIO as GPIO
 import pygame
 import csv
-
-# Buzzer params
-BUZZER_PIN = 17         # Trigger (+) pin for buzzer
-BUZZER_TIME = 0.5       # Time (sec) for buzzer to sound
-BUZZER_DUTYCYCLE = 50   # Duty cycle (%) for buzzer
 
 # Timing params
 TIMEOUT_TIME = 10       # Duration of timeout (sec)
@@ -163,9 +157,6 @@ def initStim():
     time.sleep(0.1)
     scommand.sendall(b'execute uploadstimparameters ' + STIM_CHANNEL)
     time.sleep(1)
-
-    scommand.sendall(b'set ' + STIM_CHANNEL + b'.recordingenabled true')
-    time.sleep(0.1)
 
     # Send command to RHX software to begin recording
     scommand.sendall(b'set runmode record')
