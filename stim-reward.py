@@ -25,9 +25,6 @@
 # BP 3: Right
 #######################################################################################
 
-from asyncio import events
-import tkinter as tk
-from tkinter import filedialog
 import datetime
 import os, random, sys, time, socket
 from pybpodapi.protocol import Bpod, StateMachine
