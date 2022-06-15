@@ -199,7 +199,7 @@ def main():
             state_name='WaitForPort2Poke',
             state_timer=1,
             state_change_conditions={Bpod.Events.Port2In: 'Stimulus'},
-            output_actions=[(Bpod.OutputChannels.PWM2, 255)])   # Change Bpod LED to green to show ready
+            output_actions=[(Bpod.OutputChannels.PWM2, 255)])
 
         # Perform stimulus
         sma.add_state(
@@ -213,7 +213,7 @@ def main():
             state_name='WaitForResponse',
             state_timer=1,
             state_change_conditions={Bpod.Events.Port1In: leftAction, Bpod.Events.Port3In: rightAction},
-            output_actions=[])
+            output_actions=[(Bpod.OutputChannels.PWM1, 255), (Bpod.OutputChannels.PWM3, 255)])
 
         # Reward on proper action
         sma.add_state(
