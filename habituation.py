@@ -45,12 +45,6 @@ def softCode(data):
     # Buzzer only played for 1-3
     if data < 4:
         if data == 1:
-            events.append("Init tone")
-
-            # play init sound
-            sound = pygame.mixer.Sound('./audio/init.wav')
-
-        elif data == 2:
             events.append("Reward tone")
 
             # play reward sound
@@ -96,7 +90,7 @@ def stage3():
             state_name='Stimulus',
             state_timer=0.1,
             state_change_conditions={Bpod.Events.Tup: 'WaitForResponse'},
-            output_actions=[(Bpod.OutputChannels.SoftCode, 1)])
+            output_actions=[])
 
         # Wait for response
         sma.add_state(
@@ -110,14 +104,14 @@ def stage3():
             state_name='RewardLeft',
             state_timer=0.1,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
-            output_actions=[(Bpod.OutputChannels.Valve, 1), (Bpod.OutputChannels.SoftCode, 2)])  # Reward + reward tone
+            output_actions=[(Bpod.OutputChannels.Valve, 1), (Bpod.OutputChannels.SoftCode, 1)])  # Reward + reward tone
 
         # Reward for right side
         sma.add_state(
             state_name='RewardRight',
             state_timer=0.1,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
-            output_actions=[(Bpod.OutputChannels.Valve, 3), (Bpod.OutputChannels.SoftCode, 2)])  # Reward + reward tone
+            output_actions=[(Bpod.OutputChannels.Valve, 3), (Bpod.OutputChannels.SoftCode, 1)])  # Reward + reward tone
 
         my_bpod.send_state_machine(sma)  # Send state machine description to Bpod device
 
@@ -150,7 +144,7 @@ def stage2():
             state_name='Reward',
             state_timer=0.1,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
-            output_actions=[(Bpod.OutputChannels.Valve, 2), (Bpod.OutputChannels.SoftCode, 1)])  # Reward + init tone
+            output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward + init tone
 
         my_bpod.send_state_machine(sma)  # Send state machine description to Bpod device
 
