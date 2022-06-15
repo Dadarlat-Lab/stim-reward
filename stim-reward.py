@@ -38,11 +38,9 @@ BUZZER_DUTYCYCLE = 50   # Duty cycle (%) for buzzer
 TIMEOUT_TIME = 10       # Duration of timeout (sec)
 
 # RHX TCP communication params
-COMMAND_BUFFER_SIZE = 1024      # Size of command data buffer
-WAVEFORM_BUFFER_SIZE = 772*1000   # Size of waveform data buffer
+COMMAND_BUFFER_SIZE = 8192      # Size of command data buffer
 TCP_ADDRESS = '128.46.90.210'       # IP Address (using localhost currently)
 COMMAND_PORT = 5000             # Port for sending command data
-WAVEFORM_PORT = 5001            # Port for receiving waveform data
 
 # RHX stimulation params
 STIM_CHANNEL = b'A-000'                      # Stimulation channel (port-channel #)
@@ -55,7 +53,6 @@ STIM_TYPE = b'biphasicwithinterphasedelay'   # Type/shape of stimulation
 
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
-    global trialCounter
     global timestamps
     global events
 
@@ -75,16 +72,12 @@ def softCode(data):
 
         elif data == 2:
             events.append("Success")
-            trialResults[trialCounter] = "Success"
-            trialCounter += 1
 
             # play reward sound
             sound = pygame.mixer.Sound('./audio/reward.wav')
 
         elif data == 3:
             events.append("Failure")
-            trialResults[trialCounter] = "Failure"
-            trialCounter += 1
 
             # play punish sound
             sound = pygame.mixer.Sound('./audio/punish.wav')
@@ -129,27 +122,6 @@ def tcpInit():
         scommand.sendall(b'set runmode stop')
         time.sleep(0.1) # Allow time for RHX software to accept this command before the next one comes
 
-    # Query sample rate from RHX software
-    scommand.sendall(b'get sampleratehertz')
-    commandReturn = str(scommand.recv(COMMAND_BUFFER_SIZE), "utf-8")
-    expectedReturnString = "Return: SampleRateHertz "
-    if commandReturn.find(expectedReturnString) == -1: # Look for "Return: SampleRateHertz N" where N is the sample rate
-        raise Exception('Unable to get sample rate from server')
-    else:
-        sampleRate = float(commandReturn[len(expectedReturnString):])
-
-    # Calculate timestep from sample rate
-    timestep = 1 / sampleRate
-
-    # Clear TCP data output to ensure no TCP channels are enabled
-    scommand.sendall(b'execute clearalldataoutputs')
-    time.sleep(0.1)
-
-    # Send TCP commands to set up TCP Data Output Enabled for wide
-    # band of channel A-010
-    scommand.sendall(b'set ' + STIM_CHANNEL + b'.tcpdataoutputenabled true')
-    time.sleep(0.1)
-
     # Send command to RHX software to set baseFileName
     scommand.sendall(b'set filename.basefilename recording-' + date.encode('utf-8') + b'.rhs')
     time.sleep(0.1)
@@ -183,11 +155,11 @@ def initStim():
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphaseamplitudemicroamps ' + STIM_CURRENT)
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphasedurationmicroseconds ' + STIM_DURATION.encode('utf-8'))
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.firstphasedurationmicroseconds ' + str(STIM_DURATION).encode('utf-8'))
     time.sleep(0.1)
     scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphaseamplitudemicroamps ' + STIM_CURRENT)
     time.sleep(0.1)
-    scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphasedurationmicroseconds ' + STIM_DURATION.encode('utf-8'))
+    scommand.sendall(b'set ' + STIM_CHANNEL + b'.secondphasedurationmicroseconds ' + str(STIM_DURATION).encode('utf-8'))
     time.sleep(0.1)
     scommand.sendall(b'execute uploadstimparameters ' + STIM_CHANNEL)
     time.sleep(1)
@@ -197,64 +169,6 @@ def initStim():
 
     # Send command to RHX software to begin recording
     scommand.sendall(b'set runmode record')
-
-
-# Read waveform--Credit Intan RHX Example TCP Client
-def parseWaveform():
-    # Calculations for accurate parsing
-    # At 30 kHz with 1 channel, 1 second of wideband waveform data (including magic number, timestamps, and amplifier data) is 181,420 bytes
-    # N = (framesPerBlock * waveformBytesPerFrame + SizeOfMagicNumber) * NumBlocks where:
-    # framesPerBlock = 128 ; standard data block size used by Intan
-    # waveformBytesPerFrame = SizeOfTimestamp + SizeOfSample ; timestamp is a 4-byte (32-bit) int, and amplifier sample is a 2-byte (16-bit) unsigned int
-    # SizeOfMagicNumber = 4; Magic number is a 4-byte (32-bit) unsigned int
-    # NumBlocks = NumFrames / framesPerBlock ; At 30 kHz, 1 second of data has 30000 frames. NumBlocks must be an integer value, so round up to 235
-
-    framesPerBlock = 128
-    waveformBytesPerFrame = 4 + 2
-    waveformBytesPerBlock = framesPerBlock * waveformBytesPerFrame + 4
-
-    # Read waveform data
-    rawData = swaveform.recv(WAVEFORM_BUFFER_SIZE)
-
-    print(len(rawData))
-    print(waveformBytesPerBlock)
-
-    if len(rawData) % waveformBytesPerBlock != 0:
-        raise Exception('An unexpected amount of data arrived that is not an integer multiple of the expected data size per block')
-    numBlocks = int(len(rawData) / waveformBytesPerBlock)
-
-    rawIndex = 0 # Index used to read the raw data that came in through the TCP socket
-    amplifierTimestamps = [] # List used to contain scaled timestamp values in seconds
-    amplifierData = [] # List used to contain scaled amplifier data in microVolts
-
-    for block in range(numBlocks):
-        # Expect 4 bytes to be TCP Magic Number as uint32.
-        # If not what's expected, raise an exception.
-        magicNumber, rawIndex = readUint32(rawData, rawIndex)
-        if magicNumber != 0x2ef07a08:
-            raise Exception('Error... magic number incorrect')
-
-        # Each block should contain 128 frames of data - process each
-        # of these one-by-one
-        for frame in range(framesPerBlock):
-            # Expect 4 bytes to be timestamp as int32.
-            rawTimestamp, rawIndex = readInt32(rawData, rawIndex)
-
-            # Multiply by 'timestep' to convert timestamp to seconds
-            amplifierTimestamps.append(rawTimestamp * timestep)
-
-            # Expect 2 bytes of wideband data.
-            rawSample, rawIndex = readUint16(rawData, rawIndex)
-
-            # Scale this sample to convert to microVolts
-            amplifierData.append(0.195 * (rawSample - 32768))
-
-    # Export neural data as csv
-    with open('neural-' + date + '.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows([amplifierTimestamps, amplifierData])
-
-    print("Neural data report generated!")
 
 # Main function
 def main():
@@ -320,7 +234,7 @@ def main():
         # Punish
         sma.add_state(
             state_name='Punish',
-            state_timer=3,
+            state_timer=5,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
             output_actions=[(Bpod.OutputChannels.SoftCode, 3)])  # Signal incorrect choice
 
@@ -337,8 +251,6 @@ def main():
     scommand.sendall(b'set runmode stop') # Stop recording
 
     scommand.close()                      # Close TCP socket
-
-    parseWaveform()                       # Parse waveform data
 
     # Export event data as csv
     with open('event-' + date + '.csv', 'w', newline='') as file:
@@ -360,9 +272,7 @@ if __name__ == '__main__':
             os._exit(0)
 
     # Parse date
-    date = datetime.datetime.now().strftime("%m%d%y-%H%S")
-
-    trialCounter = 0     # Keep track of count of trials
+    date = datetime.datetime.now().strftime("%m%d%y-%H%M")
 
     timestamps = []      # Timestamps for trial events
     events = []          # Trial events
@@ -375,14 +285,6 @@ if __name__ == '__main__':
     print('Connecting to TCP command server...')
     scommand = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     scommand.connect((TCP_ADDRESS, COMMAND_PORT))
-
-    # Connect to TCP waveform server
-    print('Connecting to TCP waveform server...')
-    swaveform = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    swaveform.connect((TCP_ADDRESS, WAVEFORM_PORT))
-
-    timestep = 0    # Var to hold timestep
-    trialResults = ["" for x in range(nTrials)]
 
     # Handle keyboard interrupts gracefully
     try:
