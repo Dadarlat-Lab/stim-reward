@@ -18,7 +18,7 @@ Intan Controller <--> Host PC <--> Raspberry Pi <--> Bpod State Machine with Pok
 To run this software, please install the required Python modules:
 
 ```bash
-pip3 install -r requirements.txt --upgrade
+pip3 install -r reqs.txt --upgrade
 ```
 
 ## Running
