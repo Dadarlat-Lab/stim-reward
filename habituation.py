@@ -3,7 +3,7 @@
 # MOUSE HABITUATION PROGRAM USING BPOD STATE MACHINE AND INTAN CONTROLLER
 # Thomas Makin and Kathleen Kisker
 #
-# BSD 3-Clause License
+# MIT License
 # Copyright (c) 2022, Purdue University All rights reserved.
 #
 # pybpod-api Sample Code
