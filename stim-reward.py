@@ -32,7 +32,7 @@ import pygame
 import csv
 
 # Timing params
-TIMEOUT_TIME = 10       # Duration of timeout (sec)
+TIMEOUT_TIME = 5    # Duration of timeout (sec)
 
 # RHX TCP communication params
 COMMAND_BUFFER_SIZE = 8192      # Size of command data buffer
@@ -228,7 +228,7 @@ def main():
         # Punish
         sma.add_state(
             state_name='Punish',
-            state_timer=5,
+            state_timer=TIMEOUT_TIME,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
             output_actions=[(Bpod.OutputChannels.SoftCode, 3)])  # Signal incorrect choice
 
