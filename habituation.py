@@ -12,15 +12,14 @@
 #
 # Stage Key:
 # 1. In box, no digital feedback required
-# 2. Nose poke initiation --> reward + start tone
-# 3. Nose poke initiation + start tone -> nose poke response ports + reward tone
-# 4. Nose poke initiation + start tone --> nose poke in correct response port + reward tone
+# 2. Nose poke anywhere ----> reward
+# 3. Nose poke initiation --> nose poke response ports ------------> reward + reward tone
+# 4. Nose poke initiation --> nose poke in correct response port --> reward + reward tone
 # |
 # |-> for stage 4 use stim-reward.py
 #
 # Softcode Key:
-# 1: Initiation
-# 2: Reward
+# 1: Reward
 #
 # Bpod State Machine Port Key:
 # BP 1: Left
@@ -43,20 +42,19 @@ def softCode(data):
     timestamps.append(datetime.datetime.now().strftime("%H:%M:%S.%f"))
 
     # Buzzer only played for 1-3
-    if data < 4:
-        if data == 1:
-            events.append("Reward tone")
+    if data == 1:
+        events.append("Reward tone")
 
-            # play reward sound
-            sound = pygame.mixer.Sound('./audio/reward.wav')
-        
-        else:
-            events.append("Invalid code")
-            return
+        # play reward sound
+        sound = pygame.mixer.Sound('./audio/reward.wav')
+    
+    else:
+        events.append("Invalid code")
+        return
 
-        playing = sound.play()
-        while playing.get_busy():
-            pygame.time.delay(100)
+    playing = sound.play()
+    while playing.get_busy():
+        pygame.time.delay(100)
 
 # Export event data
 def parseEvents():
@@ -68,6 +66,7 @@ def parseEvents():
     print("Event data report generated!")
 
 # Habituation stage 3 function
+# Poke init --> Poke either response port --> Reward
 def stage3():
     # Init audio mixer
     pygame.mixer.init()
@@ -122,6 +121,7 @@ def stage3():
     my_bpod.close()                       # Disconnect Bpod and perform post-run actions
 
 # Habituation stage 2 function
+# Poke anywhere --> reward
 def stage2():
     # Init audio mixer
     pygame.mixer.init()
@@ -136,15 +136,27 @@ def stage2():
         sma.add_state(
             state_name='WaitForPort2Poke',
             state_timer=1,
-            state_change_conditions={Bpod.Events.Port2In: 'Reward'},
-            output_actions=[(Bpod.OutputChannels.PWM2, 255)])
+            state_change_conditions={Bpod.Events.Port1In: 'Reward1', Bpod.Events.Port2In: 'Reward2', Bpod.Events.Port3In: 'Reward3'},
+            output_actions=[(Bpod.OutputChannels.PWM1, 255), (Bpod.OutputChannels.PWM2, 255), (Bpod.OutputChannels.PWM3, 255)])
 
-        # Reward on proper action
+        # Reward on action
         sma.add_state(
-            state_name='Reward',
+            state_name='Reward1',
             state_timer=0.1,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
-            output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward + init tone
+            output_actions=[(Bpod.OutputChannels.Valve, 1)])  # Reward
+        
+        sma.add_state(
+            state_name='Reward2',
+            state_timer=0.1,
+            state_change_conditions={Bpod.Events.Tup: 'exit'},
+            output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward
+
+        sma.add_state(
+            state_name='Reward3',
+            state_timer=0.1,
+            state_change_conditions={Bpod.Events.Tup: 'exit'},
+            output_actions=[(Bpod.OutputChannels.Valve, 3)])  # Reward
 
         my_bpod.send_state_machine(sma)  # Send state machine description to Bpod device
 
