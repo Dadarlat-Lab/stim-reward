@@ -25,13 +25,9 @@
 # BP 3: Right
 #######################################################################################
 
-from ast import arg
-import datetime
-import os, random, sys, time, socket
-from pybpodapi.protocol import Bpod, StateMachine
-import pysine
-import csv
-from subprocess import call
+import csv, datetime, os, random, socket, subprocess, sys, time # Builtin lib imports
+import pysine                                                   # Sine freq generator
+from pybpodapi.protocol import Bpod, StateMachine               # Python Bpod API
 
 # Timing params
 TIMEOUT_TIME = 5    # Duration of timeout (sec)
@@ -253,7 +249,7 @@ if __name__ == '__main__':
         volume = DEFAULT_VOLUME          # Use default volume if no volume specififed
 
     # Set volume via amixer subprocess
-    call(["amixer", "-D", "pulse", "sset", "Master", volume])
+    subprocess.call(["amixer", "-D", "pulse", "sset", "Master", volume])
 
     # Parse date
     date = datetime.datetime.now().strftime("%m%d%y-%H%M")
