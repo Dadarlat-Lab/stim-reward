@@ -29,11 +29,13 @@ Configure the TCP command and waveform servers in the Intan RHX software on the 
 To run [`habituation.py`](habituation.py):
 
 ```
-./habituation.py <stage: 2 | 3> <number of trials: >0>
+./habituation.py <stage: 2 | 3> <number of trials: (0, INF)>
 ```
 
 To run [`stim-reward.py`](stim-reward.py):
 
 ```
-./habituation.py <number of trials: >0>
+./stim-reward.py <number of trials: (0, INF)> [<volume: (0,100]>]
 ```
+
+As indicated by the [], `volume` is an optional parameter that defaults to 50 (half volume) if not indicated
