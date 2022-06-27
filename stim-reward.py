@@ -50,7 +50,8 @@ STIM_TYPE = b'biphasicwithinterphasedelay'   # Type/shape of stimulation
 STIM_TONE = 15000       # Stim tone frequency (Hz)
 REWARD_TONE = 18000     # Reward tone frequency (Hz)
 PUNISH_TONE = 22000     # Punishment tone frequency (Hz)
-DEFAULT_VOLUME = "50%"  # Defualt volume (if optional parameter not set)
+DEFAULT_VOLUME = "50%"  # Defualt volume (if optional arg not set)
+RESPONSE_VOLUME = "50%" # Volume for reward and punishment tones--NOT CONTROLLED BY ARGUMENT
 
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
@@ -65,6 +66,9 @@ def softCode(data):
         if data == 1:
             events.append("Stim")
 
+            # Set volume via amixer subprocess
+            subprocess.call(["amixer", "-D", "pulse", "sset", "Master", volume])
+
             # play stim sound (convert duration in ms to seconds)
             pysine.sine(frequency=STIM_TONE, duration=(STIM_DURATION * 0.001))
 
@@ -74,11 +78,17 @@ def softCode(data):
         elif data == 2:
             events.append("Success")
 
+            # Set volume via amixer subprocess
+            subprocess.call(["amixer", "-D", "pulse", "sset", "Master", RESPONSE_VOLUME])
+
             # play reward sound
             pysine.sine(frequency=REWARD_TONE, duration=(STIM_DURATION * 0.001))
 
         elif data == 3:
             events.append("Failure")
+
+            # Set volume via amixer subprocess
+            subprocess.call(["amixer", "-D", "pulse", "sset", "Master", RESPONSE_VOLUME])
 
             # play punish sound
             pysine.sine(frequency=PUNISH_TONE, duration=(STIM_DURATION * 0.001))
@@ -247,9 +257,6 @@ if __name__ == '__main__':
         volume = str(sys.argv[2]) + "%"
     else:
         volume = DEFAULT_VOLUME          # Use default volume if no volume specififed
-
-    # Set volume via amixer subprocess
-    subprocess.call(["amixer", "-D", "pulse", "sset", "Master", volume])
 
     # Parse date
     date = datetime.datetime.now().strftime("%m%d%y-%H%M")
