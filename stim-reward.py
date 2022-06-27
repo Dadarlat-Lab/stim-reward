@@ -90,27 +90,6 @@ def softCode(data):
     elif data == 10:
         events.append("NoStim")
 
-# Read unsigned 32-bit int--Credit Intan RHX Example TCP Client
-def readUint32(array, arrayIndex):
-    variableBytes = array[arrayIndex : arrayIndex + 4]
-    variable = int.from_bytes(variableBytes, byteorder='little', signed=False)
-    arrayIndex = arrayIndex + 4
-    return variable, arrayIndex
-
-# Read signed 32-bit int--Credit Intan RHX Example TCP Client
-def readInt32(array, arrayIndex):
-    variableBytes = array[arrayIndex : arrayIndex + 4]
-    variable = int.from_bytes(variableBytes, byteorder='little', signed=True)
-    arrayIndex = arrayIndex + 4
-    return variable, arrayIndex
-
-# Read unsigned 16-bit int--Credit Intan RHX Example TCP Client
-def readUint16(array, arrayIndex):
-    variableBytes = array[arrayIndex : arrayIndex + 2]
-    variable = int.from_bytes(variableBytes, byteorder='little', signed=False)
-    arrayIndex = arrayIndex + 2
-    return variable, arrayIndex
-
 # TCP connection initialization--Credit Intan RHX Example TCP Client
 def tcpInit():
     # Query runmode from RHX software
