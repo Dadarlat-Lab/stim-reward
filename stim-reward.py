@@ -221,7 +221,7 @@ def main():
         # Reward on proper action
         sma.add_state(
             state_name='Reward',
-            state_timer=0.1,
+            state_timer=0.15,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
             output_actions=[(Bpod.OutputChannels.Valve, rewardValve), (Bpod.OutputChannels.SoftCode, 2)])  # Reward correct choice
 

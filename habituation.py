@@ -81,7 +81,7 @@ def stage3():
         sma.add_state(
             state_name='WaitForPort2Poke',
             state_timer=1,
-            state_change_conditions={Bpod.Events.Port2In: 'Stimulus'},
+            state_change_conditions={Bpod.Events.Port2In: 'RewardInit'},
             output_actions=[(Bpod.OutputChannels.PWM2, 255)])
 
         # Perform stimulus
@@ -98,17 +98,24 @@ def stage3():
             state_change_conditions={Bpod.Events.Port1In: 'RewardLeft', Bpod.Events.Port3In: 'RewardRight'},
             output_actions=[(Bpod.OutputChannels.PWM1, 255), (Bpod.OutputChannels.PWM3, 255)])
 
+        # Reward for initiation
+        sma.add_state(
+            state_name='RewardInit',
+            state_timer=0.1,
+            state_change_conditions={Bpod.Events.Tup: 'Stimulus'},
+            output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward + reward tone
+
         # Reward for left side
         sma.add_state(
             state_name='RewardLeft',
-            state_timer=0.1,
+            state_timer=0.15,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
             output_actions=[(Bpod.OutputChannels.Valve, 1), (Bpod.OutputChannels.SoftCode, 1)])  # Reward + reward tone
 
         # Reward for right side
         sma.add_state(
             state_name='RewardRight',
-            state_timer=0.1,
+            state_timer=0.15,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
             output_actions=[(Bpod.OutputChannels.Valve, 3), (Bpod.OutputChannels.SoftCode, 1)])  # Reward + reward tone
 
@@ -142,19 +149,19 @@ def stage2():
         # Reward on action
         sma.add_state(
             state_name='Reward1',
-            state_timer=0.1,
+            state_timer=0.15,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
             output_actions=[(Bpod.OutputChannels.Valve, 1)])  # Reward
         
         sma.add_state(
             state_name='Reward2',
-            state_timer=0.1,
+            state_timer=0.15,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
             output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward
 
         sma.add_state(
             state_name='Reward3',
-            state_timer=0.1,
+            state_timer=0.15,
             state_change_conditions={Bpod.Events.Tup: 'exit'},
             output_actions=[(Bpod.OutputChannels.Valve, 3)])  # Reward
 
@@ -165,6 +172,22 @@ def stage2():
         print("Current trial info: ", my_bpod.session.current_trial)
 
     my_bpod.close()                       # Disconnect Bpod and perform post-run actions
+
+def cleanup():
+    sma = StateMachine(my_bpod)
+
+    sma.add_state(
+        state_name='Cleanup',
+        state_timer=5,
+        state_change_conditions={Bpod.Events.Tup: 'exit'},
+        output_actions=[(Bpod.OutputChannels.Valve, 1), (Bpod.OutputChannels.Valve, 2), (Bpod.OutputChannels.Valve, 3), (Bpod.OutputChannels.PWM1, 0), (Bpod.OutputChannels.PWM2, 0), (Bpod.OutputChannels.PWM3, 0)])  # Reward
+
+    my_bpod.send_state_machine(sma)  # Send state machine description to Bpod device
+
+    my_bpod.run_state_machine(sma)  # Run state machine
+
+    my_bpod.close()
+
 
 # ENTRY
 
@@ -206,7 +229,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('Interrupted')
         try:
-            my_bpod.close()     # Reset bpod
+            cleanup()
             sys.exit(0)
         except SystemExit:
             os._exit(0)
