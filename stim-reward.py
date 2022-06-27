@@ -25,11 +25,13 @@
 # BP 3: Right
 #######################################################################################
 
+from ast import arg
 import datetime
 import os, random, sys, time, socket
 from pybpodapi.protocol import Bpod, StateMachine
 import pysine
 import csv
+from subprocess import call
 
 # Timing params
 TIMEOUT_TIME = 5    # Duration of timeout (sec)
@@ -52,6 +54,7 @@ STIM_TYPE = b'biphasicwithinterphasedelay'   # Type/shape of stimulation
 STIM_TONE = 15000       # Stim tone frequency (Hz)
 REWARD_TONE = 18000     # Reward tone frequency (Hz)
 PUNISH_TONE = 22000     # Punishment tone frequency (Hz)
+DEFAULT_VOLUME = "50%"  # Defualt volume (if optional parameter not set)
 
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
@@ -254,14 +257,24 @@ def main():
 # ENTRY
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        nTrials = int(sys.argv[1])
-    else:
-        print("Syntax: ./stim-reward.py <nTrials>")
+    # Exit if improper syntax
+    argLen = len(sys.argv)
+    if argLen < 2 | argLen > 3:
+        print("Syntax: ./stim-reward.py <nTrials> [<volume>]")
         try:
             sys.exit(0)
         except SystemExit:
             os._exit(0)
+    
+    # Parse args
+    nTrials = int(sys.argv[1])
+    if argLen == 3:
+        volume = str(sys.argv[2]) + "%"
+    else:
+        volume = DEFAULT_VOLUME          # Use default volume if no volume specififed
+
+    # Set volume via amixer subprocess
+    call(["amixer", "-D", "pulse", "sset", "Master", volume])
 
     # Parse date
     date = datetime.datetime.now().strftime("%m%d%y-%H%M")
