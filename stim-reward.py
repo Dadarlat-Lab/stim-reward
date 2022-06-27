@@ -28,7 +28,7 @@
 import datetime
 import os, random, sys, time, socket
 from pybpodapi.protocol import Bpod, StateMachine
-import pygame
+import pysine
 import csv
 
 # Timing params
@@ -36,17 +36,22 @@ TIMEOUT_TIME = 5    # Duration of timeout (sec)
 
 # RHX TCP communication params
 COMMAND_BUFFER_SIZE = 8192      # Size of command data buffer
-TCP_ADDRESS = '128.46.90.210'       # IP Address (using localhost currently)
+TCP_ADDRESS = '128.46.90.210'   # IP Address (using localhost currently)
 COMMAND_PORT = 5000             # Port for sending command data
 
 # RHX stimulation params
 STIM_CHANNEL = b'A-000'                      # Stimulation channel (port-channel #)
 STIM_CURRENT = b'25'                         # Current of stimulation amplitude (microamps)
 STIM_INTERPHASE = b'50'                      # Duration of interphase (microseconds)
-STIM_DURATION = 200                         # Duration of stim pulse (microseconds)
-STIM_TOTAL = 0.1                            # Total time of stim pulsing (sec)
-STIM_FREQ = 250                             # Frequency of pulses (Hz)
+STIM_DURATION = 200                          # Duration of stim pulse (microseconds)
+STIM_TOTAL = 0.1                             # Total time of stim pulsing (sec)
+STIM_FREQ = 250                              # Frequency of pulses (Hz)
 STIM_TYPE = b'biphasicwithinterphasedelay'   # Type/shape of stimulation
+
+# Audio params
+STIM_TONE = 15000       # Stim tone frequency (Hz)
+REWARD_TONE = 18000     # Reward tone frequency (Hz)
+PUNISH_TONE = 22000     # Punishment tone frequency (Hz)
 
 # Parse softcodes from State Machine USB serial interface
 def softCode(data):
@@ -61,8 +66,8 @@ def softCode(data):
         if data == 1:
             events.append("Stim")
 
-            # play init sound
-            sound = pygame.mixer.Sound('./audio/init.wav')
+            # play stim sound (convert duration in ms to seconds)
+            pysine.sine(frequency=STIM_TONE, duration=(STIM_DURATION * 0.001))
 
             # Stimulate
             scommand.sendall(b'execute manualstimtriggerpulse f1')
@@ -71,17 +76,13 @@ def softCode(data):
             events.append("Success")
 
             # play reward sound
-            sound = pygame.mixer.Sound('./audio/reward.wav')
+            pysine.sine(frequency=REWARD_TONE, duration=(STIM_DURATION * 0.001))
 
         elif data == 3:
             events.append("Failure")
 
             # play punish sound
-            sound = pygame.mixer.Sound('./audio/punish.wav')
-
-        playing = sound.play()
-        while playing.get_busy():
-            pygame.time.delay(100)
+            pysine.sine(frequency=PUNISH_TONE, duration=(STIM_DURATION * 0.001))
 
     elif data == 10:
         events.append("NoStim")
@@ -169,9 +170,6 @@ def main():
     # Init TCP connection
     tcpInit()
     initStim()
-
-    # Init audio mixer
-    pygame.mixer.init()
 
     trialTypes = [1, 2]  # 1 (rewarded left) or 2 (rewarded right)
 
