@@ -40,8 +40,8 @@ TCP_ADDRESS = '128.46.90.210'       # IP Address (using localhost currently)
 COMMAND_PORT = 5000             # Port for sending command data
 
 # RHX stimulation params
-STIM_CHANNEL = b'A-000'                      # Stimulation channel (port-channel #)
-STIM_CURRENT = b'25'                         # Current of stimulation amplitude (microamps)
+STIM_CHANNEL = b'A-005'                      # Stimulation channel (port-channel #)
+STIM_CURRENT = b'15'                         # Current of stimulation amplitude (microamps)
 STIM_INTERPHASE = b'50'                      # Duration of interphase (microseconds)
 STIM_DURATION = 200                         # Duration of stim pulse (microseconds)
 STIM_TOTAL = 0.1                            # Total time of stim pulsing (sec)
@@ -176,8 +176,7 @@ def main():
     trialTypes = [1, 2]  # 1 (rewarded left) or 2 (rewarded right)
 
     # Credit: https://bit.ly/3Q0N6Af (pybpod-api protocol docs)
-    for i in range(nTrials):  # Main loop
-        print('Trial: ', i+1)
+    while 1 == 1:  # Main loop
         thisTrialType = random.choice(trialTypes)  # Randomize trial type
 
         stim = False
@@ -201,7 +200,7 @@ def main():
         sma.add_state(
             state_name='WaitForPort2Poke',
             state_timer=1,
-            state_change_conditions={Bpod.Events.Port2In: 'Stimulus'},
+            state_change_conditions={Bpod.Events.Port2In: 'RewardInit'},
             output_actions=[(Bpod.OutputChannels.PWM2, 255)])
 
         # Perform stimulus
@@ -217,6 +216,14 @@ def main():
             state_timer=1,
             state_change_conditions={Bpod.Events.Port1In: leftAction, Bpod.Events.Port3In: rightAction},
             output_actions=[(Bpod.OutputChannels.PWM1, 255), (Bpod.OutputChannels.PWM3, 255)])
+
+
+        # Reward on init
+        sma.add_state(
+            state_name='RewardInit',
+            state_timer=0.075,
+            state_change_conditions={Bpod.Events.Tup: 'Stimulus'},
+            output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward correct choice
 
         # Reward on proper action
         sma.add_state(
@@ -240,31 +247,10 @@ def main():
 
         print("Current trial info: ", my_bpod.session.current_trial)
 
-    my_bpod.close()                       # Disconnect Bpod and perform post-run actions
-
-    scommand.sendall(b'set runmode stop') # Stop recording
-
-    scommand.close()                      # Close TCP socket
-
-    # Export event data as csv
-    with open('event-' + date + '.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows([timestamps, events])
-
-    print("Event data report generated!")
 
 # ENTRY
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        nTrials = int(sys.argv[1])
-    else:
-        print("Syntax: ./stim-reward.py <nTrials>")
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
-
     # Parse date
     date = datetime.datetime.now().strftime("%m%d%y-%H%M")
 
@@ -286,8 +272,16 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('Interrupted')
         try:
-            my_bpod.close()     # Reset bpod
-            scommand.close()    # Close TCP socket
+            my_bpod.close()                       # Disconnect Bpod and perform post-run actions
+            scommand.sendall(b'set runmode stop') # Stop recording
+            scommand.close()                      # Close TCP socket
+
+            # Export event data as csv
+            with open('event-' + date + '.csv', 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows([timestamps, events])
+
+            print("Event data report generated!")
             sys.exit(0)
         except SystemExit:
             os._exit(0)
