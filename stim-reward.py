@@ -36,16 +36,16 @@ TIMEOUT_TIME = 5    # Duration of timeout (sec)
 
 # RHX TCP communication params
 COMMAND_BUFFER_SIZE = 8192      # Size of command data buffer
-TCP_ADDRESS = '128.46.90.210'       # IP Address (using localhost currently)
+TCP_ADDRESS = '128.46.90.210'   # IP Address (using localhost currently)
 COMMAND_PORT = 5000             # Port for sending command data
 
 # RHX stimulation params
 STIM_CHANNEL = b'A-005'                      # Stimulation channel (port-channel #)
 STIM_CURRENT = b'15'                         # Current of stimulation amplitude (microamps)
 STIM_INTERPHASE = b'50'                      # Duration of interphase (microseconds)
-STIM_DURATION = 200                         # Duration of stim pulse (microseconds)
-STIM_TOTAL = 0.1                            # Total time of stim pulsing (sec)
-STIM_FREQ = 250                             # Frequency of pulses (Hz)
+STIM_DURATION = 200                          # Duration of stim pulse (microseconds)
+STIM_TOTAL = 0.1                             # Total time of stim pulsing (sec)
+STIM_FREQ = 250                              # Frequency of pulses (Hz)
 STIM_TYPE = b'biphasicwithinterphasedelay'   # Type/shape of stimulation
 
 # Parse softcodes from State Machine USB serial interface
@@ -203,6 +203,13 @@ def main():
             state_change_conditions={Bpod.Events.Port2In: 'RewardInit'},
             output_actions=[(Bpod.OutputChannels.PWM2, 255)])
 
+        # Reward on init
+        sma.add_state(
+            state_name='RewardInit',
+            state_timer=0.075,
+            state_change_conditions={Bpod.Events.Tup: 'Stimulus'},
+            output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward correct choice
+
         # Perform stimulus
         sma.add_state(
             state_name='Stimulus',
@@ -216,14 +223,6 @@ def main():
             state_timer=1,
             state_change_conditions={Bpod.Events.Port1In: leftAction, Bpod.Events.Port3In: rightAction},
             output_actions=[(Bpod.OutputChannels.PWM1, 255), (Bpod.OutputChannels.PWM3, 255)])
-
-
-        # Reward on init
-        sma.add_state(
-            state_name='RewardInit',
-            state_timer=0.075,
-            state_change_conditions={Bpod.Events.Tup: 'Stimulus'},
-            output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward correct choice
 
         # Reward on proper action
         sma.add_state(
