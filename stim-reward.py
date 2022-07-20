@@ -221,7 +221,7 @@ def main():
         # Reward on init
         sma.add_state(
             state_name='RewardInit',
-            state_timer=0.075,
+            state_timer=0.05,
             state_change_conditions={Bpod.Events.Tup: 'Stimulus'},
             output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward correct choice
 
