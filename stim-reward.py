@@ -70,8 +70,8 @@ def softCode(data):
         elif data == 2:
             events.append("Success")
 
-            # play reward sound
-            sound = pygame.mixer.Sound('./audio/reward.wav')
+            # play nostim sound
+            sound = pygame.mixer.Sound('./audio/nostim.wav')
 
         elif data == 3:
             events.append("Failure")
@@ -85,6 +85,7 @@ def softCode(data):
 
     elif data == 10:
         events.append("NoStim")
+
 
 # Read unsigned 32-bit int--Credit Intan RHX Example TCP Client
 def readUint32(array, arrayIndex):
@@ -200,15 +201,8 @@ def main():
         sma.add_state(
             state_name='WaitForPort2Poke',
             state_timer=1,
-            state_change_conditions={Bpod.Events.Port2In: 'RewardInit'},
+            state_change_conditions={Bpod.Events.Port2In: 'Stimulus'},
             output_actions=[(Bpod.OutputChannels.PWM2, 255)])
-
-        # Reward on init
-        sma.add_state(
-            state_name='RewardInit',
-            state_timer=0.05,
-            state_change_conditions={Bpod.Events.Tup: 'Stimulus'},
-            output_actions=[(Bpod.OutputChannels.Valve, 2)])  # Reward correct choice
 
         # Perform stimulus
         sma.add_state(
@@ -222,7 +216,7 @@ def main():
             state_name='WaitForResponse',
             state_timer=1,
             state_change_conditions={Bpod.Events.Port1In: leftAction, Bpod.Events.Port3In: rightAction},
-            output_actions=[(Bpod.OutputChannels.PWM1, 255), (Bpod.OutputChannels.PWM3, 255)])
+            output_actions=[(Bpod.OutputChannels.PWM1, 0 if stim else 255), (Bpod.OutputChannels.PWM3, 255 if stim else 0)])
             
         # Reward on proper action
         sma.add_state(
