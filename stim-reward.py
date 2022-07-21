@@ -71,7 +71,7 @@ def softCode(data):
             events.append("Success")
 
             # play nostim sound
-            sound = pygame.mixer.Sound('./audio/nostim.wav')
+            sound = pygame.mixer.Sound('./audio/reward.wav')
 
         elif data == 3:
             events.append("Failure")
@@ -85,6 +85,9 @@ def softCode(data):
 
     elif data == 10:
         events.append("NoStim")
+        
+        # play nostim sound
+        sound = pygame.mixer.Sound('./audio/nostim.wav')
 
 
 # Read unsigned 32-bit int--Credit Intan RHX Example TCP Client
@@ -216,7 +219,7 @@ def main():
             state_name='WaitForResponse',
             state_timer=1,
             state_change_conditions={Bpod.Events.Port1In: leftAction, Bpod.Events.Port3In: rightAction},
-            output_actions=[(Bpod.OutputChannels.PWM1, 0 if stim else 255), (Bpod.OutputChannels.PWM3, 255 if stim else 0)])
+            output_actions=[(Bpod.OutputChannels.PWM1, 255 if stim else 0), (Bpod.OutputChannels.PWM3, 0 if stim else 255)])
             
         # Reward on proper action
         sma.add_state(
