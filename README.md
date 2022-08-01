@@ -1,8 +1,9 @@
 # stim-reward
-A customizable python program for training mice for and controlling neural electrostimulation via an Intan Recording Controller and Bpod Finite State Machine, to be run on a Raspberry Pi. (WIP)
+A customizable python program for training mice for and controlling neural electrostimulation via an Intan Recording Controller and Bpod Finite State Machine, to be run on a Raspberry Pi.
 
 ## Prerequisites
-- Raspberry Pi (Tested on 3B+)
+- Raspberry Pi (Tested on 3B+) or other host computer
+- Speaker atatached to host computer
 - Host PC running Intan RHX software
 - Intan Stimulation/Recording Controller (Tested on 128-ch stimulation/recording controller)
 - Bpod Finite State Machine (Tested on v2.2 with latest firmware)
