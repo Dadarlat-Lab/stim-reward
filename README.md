@@ -35,5 +35,6 @@ To run [`habituation.py`](habituation.py):
 To run [`stim-reward.py`](stim-reward.py):
 
 ```
-./habituation.py <number of trials: >0>
+./stim-reward.py
 ```
+and press Ctrl + C to end the session and save the behavioral data.
